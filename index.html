@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eetun konsertti — 3.6.2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0f0e0d;
+  --paper: #faf9f6;
+  --paper2: #f2f0eb;
+  --paper3: #e8e5de;
+  --accent: #c8522a;
+  --accent2: #e8845a;
+  --muted: #7a7060;
+  --green: #2d7a4f;
+  --green-bg: #edf6f0;
+  --border: rgba(15,14,13,0.1);
+  --card: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Figtree', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+/* NAV */
+nav { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 60px; background: var(--paper); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.logo { font-family: 'Instrument Serif', serif; font-size: 1.3rem; color: var(--ink); }
+.logo em { color: var(--accent); font-style: italic; }
+.nav-tabs { display: flex; gap: 2px; background: var(--paper2); border-radius: 8px; padding: 3px; }
+.nav-tab { padding: 6px 18px; border-radius: 6px; font-size: 0.82rem; font-weight: 500; cursor: pointer; color: var(--muted); border: none; background: none; font-family: 'Figtree', sans-serif; transition: all 0.2s; }
+.nav-tab.active { background: var(--ink); color: var(--paper); }
+.btn { padding: 8px 20px; border-radius: 7px; font-family: 'Figtree', sans-serif; font-weight: 500; font-size: 0.88rem; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #b5461f; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--ink); }
+.btn-outline:hover { background: var(--paper2); }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== PUBLIC SALES PAGE ===== */
+.sales-hero { max-width: 900px; margin: 0 auto; padding: 60px 40px 48px; display: grid; grid-template-columns: 1fr 360px; gap: 48px; align-items: start; }
+.hero-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.hero-title { font-family: 'Instrument Serif', serif; font-size: 3rem; line-height: 1.1; margin-bottom: 16px; }
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+.hero-meta-row { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; color: var(--muted); }
+.meta-icon { width: 28px; height: 28px; background: var(--paper2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.hero-desc { font-size: 0.92rem; color: var(--muted); line-height: 1.75; }
+
+/* TICKET BOX */
+.ticket-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 4px 24px rgba(15,14,13,0.07); position: sticky; top: 76px; }
+.ticket-box-title { font-family: 'Instrument Serif', serif; font-size: 1.1rem; margin-bottom: 20px; }
+.ticket-type { border: 2px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+.ticket-type:hover { border-color: var(--accent2); }
+.ticket-type.selected { border-color: var(--accent); background: rgba(200,82,42,0.04); }
+.ticket-type-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.ticket-type-name { font-weight: 600; font-size: 0.92rem; }
+.ticket-type-price { font-family: 'Instrument Serif', serif; font-size: 1.1rem; color: var(--accent); }
+.ticket-type-desc { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+.avail-bar { height: 4px; background: var(--paper2); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.avail-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.3s; }
+.avail-text { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.qty-row { display: flex; align-items: center; justify-content: space-between; margin: 20px 0; }
+.qty-label { font-size: 0.88rem; font-weight: 500; }
+.qty-ctrl { display: flex; align-items: center; gap: 12px; }
+.qty-btn { width: 32px; height: 32px; border-radius: 8px; background: var(--paper2); border: 1px solid var(--border); cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; font-family: 'Figtree', sans-serif; }
+.qty-btn:hover { background: var(--paper3); }
+.qty-val { font-weight: 600; font-size: 1rem; min-width: 24px; text-align: center; }
+.price-breakdown { border-top: 1px solid var(--border); padding-top: 14px; margin-bottom: 16px; }
+.price-row { display: flex; justify-content: space-between; font-size: 0.83rem; color: var(--muted); margin-bottom: 6px; }
+.price-total { display: flex; justify-content: space-between; font-weight: 600; font-size: 1rem; color: var(--ink); }
+
+/* EVENT LIST */
+.events-section { max-width: 900px; margin: 0 auto; padding: 0 40px 32px; }
+.section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.event-list { display: flex; flex-direction: column; gap: 10px; }
+.event-row { display: flex; align-items: center; gap: 20px; padding: 16px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+.event-row:hover { border-color: var(--accent2); box-shadow: 0 2px 12px rgba(15,14,13,0.06); }
+.event-row.active-event { border-color: var(--accent); background: rgba(200,82,42,0.03); }
+.event-date-box { width: 48px; text-align: center; flex-shrink: 0; }
+.event-date-box .day { font-family: 'Instrument Serif', serif; font-size: 1.6rem; line-height: 1; color: var(--accent); }
+.event-date-box .month { font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.event-info { flex: 1; }
+.event-info .name { font-weight: 600; font-size: 0.92rem; margin-bottom: 3px; }
+.event-info .detail { font-size: 0.78rem; color: var(--muted); }
+.event-sold { text-align: right; font-size: 0.78rem; color: var(--muted); }
+.event-sold .pct { font-family: 'Instrument Serif', serif; font-size: 1.2rem; color: var(--ink); display: block; }
+.sold-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+.sold-low { background: var(--green-bg); color: var(--green); }
+.sold-high { background: rgba(200,82,42,0.1); color: var(--accent); }
+
+/* ===== DASHBOARD ===== */
+.dash { max-width: 1000px; margin: 0 auto; padding: 40px; }
+.dash-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; }
+.dash-title { font-family: 'Instrument Serif', serif; font-size: 1.8rem; margin-bottom: 4px; }
+.dash-sub { font-size: 0.85rem; color: var(--muted); }
+.period-tabs { display: flex; gap: 2px; background: var(--paper2); border-radius: 8px; padding: 3px; }
+.period-tab { padding: 5px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 500; cursor: pointer; color: var(--muted); border: none; background: none; font-family: 'Figtree', sans-serif; transition: all 0.2s; }
+.period-tab.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.kpi-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.kpi-value { font-family: 'Instrument Serif', serif; font-size: 2rem; color: var(--ink); line-height: 1; margin-bottom: 6px; }
+.kpi-delta { font-size: 0.75rem; font-weight: 600; }
+.delta-up { color: var(--green); }
+.delta-down { color: var(--accent); }
+
+/* CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.chart-card h3 { font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+/* BAR CHART */
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--accent2); transition: height 0.4s; cursor: pointer; }
+.bar:hover { background: var(--accent); }
+.bar-label { font-size: 0.65rem; color: var(--muted); }
+
+/* DONUT */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* EVENTS TABLE */
+.events-table { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+.table-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; gap: 0; padding: 12px 20px; background: var(--paper2); border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.table-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 80px; padding: 14px 20px; border-bottom: 1px solid var(--border); align-items: center; font-size: 0.83rem; transition: background 0.15s; cursor: pointer; }
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: var(--paper); }
+.table-row .event-name { font-weight: 500; }
+.table-row .event-date { color: var(--muted); font-size: 0.78rem; }
+.progress-mini { height: 5px; background: var(--paper2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.progress-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+.status-pill { padding: 3px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 600; text-align: center; }
+.status-live { background: var(--green-bg); color: var(--green); }
+.status-soon { background: rgba(200,82,42,0.1); color: var(--accent); }
+.status-ended { background: var(--paper2); color: var(--muted); }
+
+/* BOTTOM ROW */
+.bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.bottom-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.bottom-card h3 { font-size: 0.72rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.source-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.source-name { font-size: 0.82rem; width: 90px; flex-shrink: 0; }
+.source-bar-wrap { flex: 1; height: 6px; background: var(--paper2); border-radius: 3px; overflow: hidden; }
+.source-bar-fill { height: 100%; border-radius: 3px; }
+.source-pct { font-size: 0.75rem; color: var(--muted); width: 34px; text-align: right; }
+.age-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+.age-row:last-child { border-bottom: none; }
+.age-pct { font-family: 'Instrument Serif', serif; font-size: 1rem; color: var(--accent); }
+
+/* CHECKOUT MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,14,13,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--card); border-radius: 20px; max-width: 440px; width: 100%; padding: 32px; }
+.modal h2 { font-family: 'Instrument Serif', serif; font-size: 1.4rem; margin-bottom: 6px; }
+.modal-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 24px; }
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.5px; text-transform: uppercase; }
+.form-row input { width: 100%; padding: 11px 14px; background: var(--paper); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); font-family: 'Figtree', sans-serif; font-size: 0.92rem; outline: none; transition: border-color 0.2s; }
+.form-row input:focus { border-color: var(--accent); }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-total { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 18px 0; }
+.modal-total .label { color: var(--muted); font-size: 0.88rem; }
+.modal-total .amount { font-family: 'Instrument Serif', serif; font-size: 1.3rem; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; padding: 13px; font-size: 0.92rem; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--paper); padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; z-index: 400; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 720px) {
+  .sales-hero { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .charts-row, .bottom-row { grid-template-columns: 1fr; }
+  .table-header, .table-row { grid-template-columns: 2fr 1fr 1fr; }
+  .table-header > *:nth-child(4), .table-header > *:nth-child(5),
+  .table-row > *:nth-child(4), .table-row > *:nth-child(5) { display: none; }
+  nav { padding: 0 16px; }
+  .sales-hero, .events-section, .dash { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Eetun <em>Konsertti</em></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('sales',this)">Myyntisivu</button>
+    <button class="nav-tab" onclick="showPage('dashboard',this)">Dashboard</button>
+  </div>
+</nav>
+
+<!-- ===== MYYNTISIVU ===== -->
+<div class="page active" id="page-sales">
+  <div class="sales-hero">
+    <div>
+      <div class="hero-eyebrow">Yksityinen tapahtuma · Turku</div>
+      <div class="hero-title">Eetun<br><em>Konsertti</em></div>
+      <div class="hero-meta">
+        <div class="hero-meta-row">
+          <div class="meta-icon">📅</div>
+          <span>Ke 3. kesäkuuta 2026</span>
+        </div>
+        <div class="hero-meta-row">
+          <div class="meta-icon">📍</div>
+          <span>Pormestarinkatu 2a, 20270 Turku</span>
+        </div>
+        <div class="hero-meta-row">
+          <div class="meta-icon">🔒</div>
+          <span>Vain kutsuvieraille</span>
+        </div>
+      </div>
+      <div class="hero-desc">
+        Tervetuloa Eetun konserttiiin — yksityinen ilta vain kutsutuille vieraille. Varaa lippusi ajoissa, paikkoja on rajoitetusti.
+      </div>
+    </div>
+
+      <div class="ticket-box">
+        <div class="ticket-box-title">Valitse lippu</div>
+        <div class="ticket-type selected" id="tt-early" onclick="selectTicket('early',25)">
+          <div class="ticket-type-header">
+            <div><div class="ticket-type-name">Early Bird</div><div class="ticket-type-desc">Rajoitettu erä — varaa ajoissa</div></div>
+            <div class="ticket-type-price">25 €</div>
+          </div>
+          <div class="avail-bar"><div class="avail-fill" style="width:40%"></div></div>
+          <div class="avail-text">20 / 50 myyty</div>
+        </div>
+        <div class="ticket-type" id="tt-normal" onclick="selectTicket('normal',35)">
+          <div class="ticket-type-header">
+            <div><div class="ticket-type-name">Normaalilippu</div><div class="ticket-type-desc">Sisäänpääsy konserttiin</div></div>
+            <div class="ticket-type-price">35 €</div>
+          </div>
+          <div class="avail-bar"><div class="avail-fill" style="width:15%"></div></div>
+          <div class="avail-text">15 / 100 myyty</div>
+        </div>
+        <div class="qty-row">
+          <span class="qty-label">Määrä</span>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <span class="qty-val" id="qty-display">1</span>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+        </div>
+        <div class="price-breakdown">
+          <div class="price-row"><span>Liput (<span id="qty-label">1</span> × <span id="unit-price">25</span> €)</span><span id="sub-total">25 €</span></div>
+          <div class="price-row"><span>Palvelumaksu</span><span id="fee-amount">1,25 €</span></div>
+          <div class="price-total"><span>Yhteensä</span><span id="grand-total">26,25 €</span></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:13px;font-size:0.95rem" onclick="goToStripe()">Osta liput →</button>
+        <p style="font-size:0.7rem;color:var(--muted);text-align:center;margin-top:10px">🔒 Maksu Stripellä · Peruutusoikeus 48h</p>
+      </div>
+  </div>
+
+  <!-- TAPAHTUMA -->
+  <div class="events-section">
+    <div class="section-label">Tapahtuma</div>
+    <div class="event-list">
+      <div class="event-row active-event">
+        <div class="event-date-box"><div class="day">3</div><div class="month">Jun</div></div>
+        <div class="event-info"><div class="name">Eetun Konsertti</div><div class="detail">Pormestarinkatu 2a, Turku · Yksityinen tapahtuma</div></div>
+        <div class="event-sold"><span class="pct">25%</span>myyty</div>
+        <span class="sold-badge sold-low">Saatavilla</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="page" id="page-dashboard">
+  <div class="dash">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Eetun Konsertti</div>
+        <div class="dash-sub">Järjestäjän näkymä · Turku 3.6.2026</div>
+      </div>
+      <div class="period-tabs">
+        <button class="period-tab active" onclick="setPeriod(this,'7pv')">7 pv</button>
+        <button class="period-tab" onclick="setPeriod(this,'30pv')">30 pv</button>
+        <button class="period-tab" onclick="setPeriod(this,'kaikki')">Kaikki</button>
+      </div>
+    </div>
+
+    <!-- KPI:t -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Myynti yhteensä</div>
+        <div class="kpi-value" id="kpi-revenue">1 025 €</div>
+        <div class="kpi-delta delta-up">35 lippua myyty</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Liput myyty</div>
+        <div class="kpi-value" id="kpi-tickets">35</div>
+        <div class="kpi-delta delta-up">↑ 150 paikkaa jäljellä</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Keskim. lipun hinta</div>
+        <div class="kpi-value" id="kpi-avg">29,30 €</div>
+        <div class="kpi-delta delta-up">Early Bird suosituin</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Täyttöaste</div>
+        <div class="kpi-value" id="kpi-conv">23%</div>
+        <div class="kpi-delta delta-up">Tapahtuma 3.6.2026</div>
+      </div>
+    </div>
+
+    <!-- KAAVIOT -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Myynti per esitys</h3>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Lipputyypit</h3>
+        <div class="donut-wrap">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="32" fill="none" stroke="#e8e5de" stroke-width="14"/>
+            <circle cx="45" cy="45" r="32" fill="none" stroke="#c8522a" stroke-width="14" stroke-dasharray="80 121" stroke-dashoffset="0" stroke-linecap="round"/>
+            <circle cx="45" cy="45" r="32" fill="none" stroke="#e8845a" stroke-width="14" stroke-dasharray="52 149" stroke-dashoffset="-80" stroke-linecap="round"/>
+            <circle cx="45" cy="45" r="32" fill="none" stroke="#2d7a4f" stroke-width="14" stroke-dasharray="28 173" stroke-dashoffset="-132" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#c8522a"></div><span style="flex:1;font-size:0.78rem">Early Bird</span><span style="font-size:0.78rem;font-weight:600">40%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e8845a"></div><span style="flex:1;font-size:0.78rem">Normaali</span><span style="font-size:0.78rem;font-weight:600">26%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#2d7a4f"></div><span style="flex:1;font-size:0.78rem">VIP-pöytä</span><span style="font-size:0.78rem;font-weight:600">14%</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e8e5de"></div><span style="flex:1;font-size:0.78rem">Ovi</span><span style="font-size:0.78rem;font-weight:600">20%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAPAHTUMATAULU -->
+    <div class="events-table">
+      <div class="table-header">
+        <span>Tapahtuma</span>
+        <span>Myyty</span>
+        <span>Tuotto</span>
+        <span>Täyttöaste</span>
+        <span>Tila</span>
+      </div>
+      <div class="table-row">
+        <div><div class="event-name">Eetun Konsertti — Early Bird</div><div class="event-date">Ke 3.6.2026</div></div>
+        <div>20 / 50</div>
+        <div>500 €</div>
+        <div><div>40%</div><div class="progress-mini"><div class="progress-fill" style="width:40%"></div></div></div>
+        <span class="status-pill status-live">Live</span>
+      </div>
+      <div class="table-row">
+        <div><div class="event-name">Eetun Konsertti — Normaali</div><div class="event-date">Ke 3.6.2026</div></div>
+        <div>15 / 100</div>
+        <div>525 €</div>
+        <div><div>15%</div><div class="progress-mini"><div class="progress-fill" style="width:15%"></div></div></div>
+        <span class="status-pill status-live">Live</span>
+      </div>
+    </div>
+
+    <!-- POHJARIIVI -->
+    <div class="bottom-row">
+      <div class="bottom-card">
+        <h3>Mistä ostajat tulevat</h3>
+        <div class="source-row">
+          <span class="source-name">Instagram</span>
+          <div class="source-bar-wrap"><div class="source-bar-fill" style="width:68%;background:#c8522a;height:100%"></div></div>
+          <span class="source-pct">68%</span>
+        </div>
+        <div class="source-row">
+          <span class="source-name">Suora</span>
+          <div class="source-bar-wrap"><div class="source-bar-fill" style="width:18%;background:#e8845a;height:100%"></div></div>
+          <span class="source-pct">18%</span>
+        </div>
+        <div class="source-row">
+          <span class="source-name">Facebook</span>
+          <div class="source-bar-wrap"><div class="source-bar-fill" style="width:9%;background:#7a7060;height:100%"></div></div>
+          <span class="source-pct">9%</span>
+        </div>
+        <div class="source-row">
+          <span class="source-name">Google</span>
+          <div class="source-bar-wrap"><div class="source-bar-fill" style="width:5%;background:#b4b2a9;height:100%"></div></div>
+          <span class="source-pct">5%</span>
+        </div>
+      </div>
+      <div class="bottom-card">
+        <h3>Ostajien ikäjakauma</h3>
+        <div class="age-row"><span>18–24</span><div style="flex:1;margin:0 12px;height:5px;background:var(--paper2);border-radius:3px;overflow:hidden"><div style="width:38%;height:100%;background:var(--accent);border-radius:3px"></div></div><span class="age-pct">38%</span></div>
+        <div class="age-row"><span>25–34</span><div style="flex:1;margin:0 12px;height:5px;background:var(--paper2);border-radius:3px;overflow:hidden"><div style="width:44%;height:100%;background:var(--accent);border-radius:3px"></div></div><span class="age-pct">44%</span></div>
+        <div class="age-row"><span>35–44</span><div style="flex:1;margin:0 12px;height:5px;background:var(--paper2);border-radius:3px;overflow:hidden"><div style="width:13%;height:100%;background:var(--accent2);border-radius:3px"></div></div><span class="age-pct">13%</span></div>
+        <div class="age-row"><span>45+</span><div style="flex:1;margin:0 12px;height:5px;background:var(--paper2);border-radius:3px;overflow:hidden"><div style="width:5%;height:100%;background:var(--paper3);border-radius:3px"></div></div><span class="age-pct">5%</span></div>
+        <div style="margin-top:14px;padding:10px 12px;background:var(--paper2);border-radius:8px;font-size:0.75rem;color:var(--muted);line-height:1.5">
+          💡 <strong style="color:var(--ink)">Vinkki:</strong> 82% ostajista on 18–34-vuotiaita. Instagram Stories -mainonta tavoittaa heidät parhaiten.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkout-modal" onclick="closeCheckout(event)">
+  <div class="modal">
+    <h2>Viimeistele osto</h2>
+    <div class="modal-sub" id="modal-sub">Early Bird × 1 — Pe 14. maaliskuuta</div>
+    <div class="form-row"><label>Nimi</label><input type="text" placeholder="Matti Meikäläinen" value="Matti Meikäläinen"></div>
+    <div class="form-row"><label>Sähköposti</label><input type="email" placeholder="matti@esimerkki.fi" value="matti@esimerkki.fi"></div>
+    <div class="form-row">
+      <label>Kortin numero</label>
+      <input type="text" value="4242 4242 4242 4242">
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Voimassa</label><input type="text" value="12/27"></div>
+      <div class="form-row"><label>CVC</label><input type="text" value="123"></div>
+    </div>
+    <div class="modal-total">
+      <span class="label">Maksettava summa</span>
+      <span class="amount" id="modal-total">15,75 €</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeCheckout()">Peruuta</button>
+      <button class="btn btn-primary" onclick="completePurchase()">Maksa →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedType = 'early';
+let selectedPrice = 25;
+let qty = 1;
+
+const STRIPE_LINK = 'https://buy.stripe.com/test_bJe8wI21j4Jm08y1wg3cc00';
+
+const barData = [
+  {label:'Early Bird', val:40, h:40},
+  {label:'Normaali', val:15, h:15},
+];
+
+function buildBarChart() {
+  const max = Math.max(...barData.map(d=>d.h));
+  document.getElementById('bar-chart').innerHTML = barData.map(d => `
+    <div class="bar-group">
+      <div class="bar" style="height:${(d.h/max)*90}px" title="${d.val}% täynnä"></div>
+      <div class="bar-label">${d.label}</div>
+    </div>`).join('');
+}
+
+function selectTicket(type, price) {
+  selectedType = type;
+  selectedPrice = price;
+  document.querySelectorAll('.ticket-type').forEach(t => t.classList.remove('selected'));
+  document.getElementById('tt-' + type).classList.add('selected');
+  updatePricing();
+}
+
+function goToStripe() {
+  window.location.href = STRIPE_LINK;
+}
+
+function changeQty(d) {
+  qty = Math.max(1, Math.min(10, qty + d));
+  document.getElementById('qty-display').textContent = qty;
+  updatePricing();
+}
+
+function updatePricing() {
+  const sub = selectedPrice * qty;
+  const fee = sub * 0.05;
+  const total = sub + fee;
+  document.getElementById('qty-label').textContent = qty;
+  document.getElementById('unit-price').textContent = selectedPrice;
+  document.getElementById('sub-total').textContent = sub + ' €';
+  document.getElementById('fee-amount').textContent = fee.toFixed(2).replace('.',',') + ' €';
+  document.getElementById('grand-total').textContent = total.toFixed(2).replace('.',',') + ' €';
+  document.getElementById('modal-total').textContent = total.toFixed(2).replace('.',',') + ' €';
+}
+
+function selectDate(el, date) {
+  document.querySelectorAll('.event-row').forEach(r => r.classList.remove('active-event'));
+  el.classList.add('active-event');
+  const name = el.querySelector('.name').textContent;
+  document.getElementById('modal-sub').textContent =
+    ({early:'Early Bird',normal:'Normaalilippu',vip:'VIP-pöytä'}[selectedType]) + ' × ' + qty + ' — ' + date;
+  showToast('Valittu: ' + date.split(' — ')[0] || date);
+}
+
+function openCheckout() {
+  const names = {early:'Early Bird',normal:'Normaalilippu',vip:'VIP-pöytä'};
+  document.getElementById('modal-sub').textContent = names[selectedType] + ' × ' + qty + ' — Pe 14. maaliskuuta';
+  document.getElementById('checkout-modal').classList.add('open');
+}
+
+function closeCheckout(ev) {
+  if (!ev || ev.target === ev.currentTarget) document.getElementById('checkout-modal').classList.remove('open');
+}
+
+function completePurchase() {
+  document.getElementById('checkout-modal').classList.remove('open');
+  showToast('🎉 Ostos onnistui! Liput lähetetty sähköpostiin.');
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function setPeriod(el, period) {
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const data = {
+    '7pv':  {rev:'4 820 €', tickets:'247', avg:'19,50 €', conv:'6,8%'},
+    '30pv': {rev:'18 340 €', tickets:'934', avg:'19,64 €', conv:'7,2%'},
+    'kaikki':{rev:'61 200 €', tickets:'3 120', avg:'19,62 €', conv:'7,0%'},
+  };
+  const d = data[period];
+  document.getElementById('kpi-revenue').textContent = d.rev;
+  document.getElementById('kpi-tickets').textContent = d.tickets;
+  document.getElementById('kpi-avg').textContent = d.avg;
+  document.getElementById('kpi-conv').textContent = d.conv;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+buildBarChart();
+updatePricing();
+</script>
+</body>
+</html>
