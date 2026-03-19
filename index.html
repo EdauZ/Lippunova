@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lippunova — Tapahtumat</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#0b0d12; --bg2:#10131a; --surface:#14192a; --surface2:#1c2235;
+  --blue:#2563eb; --blue-dim:#1d4ed8; --blue-light:#3b82f6;
+  --blue-glow:rgba(37,99,235,.2); --accent:#60a5fa;
+  --white:#f1f5ff; --muted:#6b7a99; --border:#1e2540; --border2:#263058;
+  --text:#dde4f5; --red:#ef4444; --green:#22c55e;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes heroFade{0%{opacity:0}100%{opacity:1}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;align-items:center;gap:1rem;padding:0 1.75rem;background:rgba(11,13,18,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--accent);letter-spacing:.04em;text-shadow:0 0 20px var(--blue-glow);cursor:pointer;flex-shrink:0}
+.nav-cats{display:flex;gap:.15rem;align-items:center;flex:1}
+.nav-cat{padding:.32rem .9rem;border-radius:6px;font-size:.82rem;font-family:'Outfit',sans-serif;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .18s;white-space:nowrap}
+.nav-cat:hover,.nav-cat.active{color:var(--white);background:var(--surface2)}
+.nav-search-wrap{position:relative;flex-shrink:0}
+.nav-search{height:36px;width:240px;padding:0 1rem 0 2.4rem;background:var(--surface);border:1px solid var(--border2);border-radius:20px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;outline:none;transition:all .2s}
+.nav-search:focus{border-color:var(--blue-light);width:300px;background:var(--surface2)}
+.nav-search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.8rem;pointer-events:none}
+.nav-right{display:flex;gap:.5rem;align-items:center;flex-shrink:0}
+.nav-btn{padding:.36rem 1rem;border-radius:8px;font-size:.82rem;font-family:'Outfit',sans-serif;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.nav-btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
+.nav-btn.ghost:hover{color:var(--white);border-color:var(--border2)}
+.nav-btn.primary{background:var(--blue);color:#fff;font-weight:600}
+.nav-btn.primary:hover{background:var(--blue-light)}
+.nav-btn.outline{background:transparent;color:var(--accent);border:1px solid var(--blue-dim);font-weight:500}
+.nav-btn.outline:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ── PAGES ── */
+.page{display:none;padding-top:62px;min-height:100vh}
+.page.active{display:block}
+
+/* ── HERO SLIDER ── */
+.hero-slider{position:relative;height:520px;overflow:hidden;background:var(--bg2)}
+.hero-slide{position:absolute;inset:0;opacity:0;transition:opacity .7s ease;display:flex;align-items:flex-end}
+.hero-slide.active{opacity:1;z-index:1}
+.hero-slide-img{position:absolute;inset:0;background-size:cover;background-position:center;background-color:var(--surface)}
+.hero-slide-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,rgba(11,13,18,.92) 0%,rgba(11,13,18,.6) 50%,rgba(11,13,18,.1) 100%)}
+.hero-slide-content{position:relative;z-index:2;padding:0 3.5rem 3.5rem;max-width:620px;animation:fadeUp .5s ease}
+.hero-slide-tag{display:inline-flex;align-items:center;gap:.5rem;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);border:1px solid var(--blue-dim);padding:.22rem .8rem;border-radius:20px;margin-bottom:1rem}
+.hero-slide-content h2{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.4rem);color:#fff;line-height:1.1;margin-bottom:.75rem}
+.hero-slide-meta{display:flex;gap:1rem;color:rgba(255,255,255,.55);font-size:.85rem;font-weight:300;margin-bottom:1.25rem}
+.hero-slide-meta span{display:flex;align-items:center;gap:.35rem}
+.btn-hero{display:inline-block;background:var(--blue);color:#fff;border:none;padding:.75rem 1.75rem;border-radius:10px;font-size:.95rem;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:background .2s}
+.btn-hero:hover{background:var(--blue-light)}
+.hero-dots{position:absolute;bottom:1.5rem;left:3.5rem;z-index:3;display:flex;gap:.5rem}
+.hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);border:none;cursor:pointer;transition:all .2s;padding:0}
+.hero-dot.active{background:var(--accent);width:24px;border-radius:4px}
+.hero-thumbnails{position:absolute;bottom:1.25rem;right:1.5rem;z-index:3;display:flex;gap:.5rem}
+.hero-thumb{width:70px;height:46px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
+.hero-thumb.active{border-color:var(--accent)}
+.hero-thumb-img{width:100%;height:100%;background-size:cover;background-position:center;background-color:var(--surface2)}
+
+/* ── FILTER ROW ── */
+.filter-row{background:var(--bg2);border-bottom:1px solid var(--border);padding:.65rem 1.75rem;display:flex;align-items:center;gap:.5rem;overflow-x:auto;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{padding:.3rem .9rem;border-radius:20px;font-size:.78rem;font-family:'Outfit',sans-serif;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);white-space:nowrap;transition:all .2s}
+.filter-chip:hover{color:var(--text);border-color:var(--border2)}
+.filter-chip.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 .25rem}
+.filter-right{margin-left:auto;flex-shrink:0}
+.btn-filter{padding:.3rem .9rem;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:.78rem;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .2s;white-space:nowrap}
+.btn-filter:hover{color:var(--text);border-color:var(--border2)}
+
+/* ── PORTAL ── */
+.portal-body{max-width:1280px;margin:0 auto;padding:2rem 1.75rem}
+.portal-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.5rem}
+.portal-header h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--white)}
+.portal-header .count{font-size:.78rem;color:var(--muted)}
+
+/* ── EVENT GRID ── */
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.1rem}
+
+/* ── EVENT CARD ── */
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .22s,border-color .22s,box-shadow .22s;animation:fadeUp .4s ease both}
+.event-card:hover{transform:translateY(-4px);border-color:var(--blue-dim);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(37,99,235,.15)}
+.event-card-img{height:168px;width:100%;background-size:cover;background-position:center;background-color:var(--surface2);position:relative;display:flex;align-items:center;justify-content:center}
+.event-card-img-placeholder{font-family:'Playfair Display',serif;font-size:3.5rem;color:rgba(96,165,250,.18);letter-spacing:-.02em;user-select:none}
+.event-card-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(20,25,42,.8) 0%,transparent 50%)}
+.event-card-date{position:absolute;top:10px;left:10px;background:rgba(11,13,18,.88);backdrop-filter:blur(8px);border:1px solid rgba(96,165,250,.25);border-radius:9px;padding:.32rem .6rem;text-align:center;min-width:44px;z-index:1}
+.event-card-date .d{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent);line-height:1}
+.event-card-date .m{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:.1rem}
+.event-card-private{position:absolute;top:10px;right:10px;background:rgba(11,13,18,.82);border:1px solid var(--border2);border-radius:6px;padding:.15rem .45rem;font-size:.66rem;color:var(--muted);z-index:1}
+.event-card-body{padding:1rem 1.1rem 1.15rem}
+.event-card-body h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--white);line-height:1.3;margin-bottom:.45rem}
+.event-card-meta{display:flex;flex-direction:column;gap:.2rem;margin-bottom:.8rem}
+.event-card-meta span{font-size:.76rem;color:var(--muted);font-weight:300}
+.event-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:.8rem}
+.event-card-price{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--accent)}
+.event-card-price small{font-family:'Outfit',sans-serif;font-size:.65rem;color:var(--muted);display:block;font-weight:300}
+.btn-card-buy{background:var(--blue);border:none;color:#fff;padding:.38rem .9rem;border-radius:7px;font-size:.76rem;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:background .2s}
+.btn-card-buy:hover{background:var(--blue-light)}
+.empty-state{grid-column:1/-1;text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty-state p{font-size:.9rem;font-weight:300}
+
+/* ── TICKET MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:fadeUp .22s ease}
+.modal-hero{height:160px;background-size:cover;background-position:center;background-color:var(--surface2);border-radius:20px 20px 0 0;position:relative}
+.modal-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(20,25,42,1) 0%,transparent 60%);border-radius:20px 20px 0 0}
+.modal-body{padding:1.5rem 1.75rem 1.75rem}
+.modal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.modal-top h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--white);flex:1;padding-right:1rem}
+.modal-close{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.modal-close:hover{color:var(--white)}
+.modal-event-meta{color:var(--muted);font-size:.82rem;font-weight:300;margin-bottom:1.4rem;display:flex;flex-direction:column;gap:.28rem}
+.ticket-row{border:1px solid var(--border2);border-radius:11px;padding:.9rem 1.15rem;margin-bottom:.55rem;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
+.ticket-row:hover{border-color:var(--blue-dim)}
+.ticket-row.selected{border-color:var(--blue);background:rgba(37,99,235,.08)}
+.ticket-name{font-weight:500;color:var(--text)}
+.ticket-avail{font-size:.72rem;color:var(--muted);margin-top:.18rem;font-weight:300}
+.ticket-price{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent)}
+.qty-row{display:flex;align-items:center;gap:1rem;margin:1.1rem 0}
+.qty-label{font-size:.82rem;color:var(--muted);font-weight:300}
+.qty-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.qty-btn:hover{border-color:var(--blue-light);color:var(--accent)}
+.qty-val{font-size:1.05rem;font-weight:600;min-width:2rem;text-align:center}
+.modal-total{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:.9rem 1.15rem;margin-bottom:1.1rem}
+.modal-total .row{display:flex;justify-content:space-between;font-size:.84rem;color:var(--muted);margin-bottom:.28rem}
+.modal-total .total{font-weight:700;font-size:1rem;color:var(--white)}
+.btn-buy{width:100%;background:var(--blue);color:#fff;border:none;padding:.9rem;border-radius:11px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s;letter-spacing:.02em}
+.btn-buy:hover{background:var(--blue-light)}
+
+/* ── LOGIN / REGISTER ── */
+#page-login{background:var(--bg);display:flex;align-items:center;justify-content:center}
+.auth-box{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2.5rem 2.25rem;width:100%;max-width:400px}
+.auth-tabs{display:flex;gap:.3rem;margin-bottom:2rem;border-bottom:1px solid var(--border)}
+.auth-tab{padding:.6rem 1.2rem;background:none;border:none;font-family:'Outfit',sans-serif;font-size:.9rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.auth-tab.active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+.auth-panel{display:none}
+.auth-panel.active{display:block}
+.auth-panel h2{font-family:'Playfair Display',serif;color:var(--white);font-size:1.7rem;margin-bottom:.35rem}
+.auth-panel p{color:var(--muted);margin-bottom:1.75rem;font-size:.88rem;font-weight:300}
+.form-field{margin-bottom:.9rem}
+.form-field label{display:block;color:var(--muted);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.38rem}
+.form-field input{width:100%;padding:.7rem .95rem;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;color:var(--white);font-family:'Outfit',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+.form-field input:focus{border-color:var(--blue-light)}
+.btn-auth{width:100%;background:var(--blue);color:#fff;border:none;padding:.85rem;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:.5rem;transition:background .2s}
+.btn-auth:hover{background:var(--blue-light)}
+.auth-error{color:var(--red);font-size:.82rem;margin-top:.65rem;display:none}
+.auth-info{color:var(--green);font-size:.82rem;margin-top:.65rem;display:none}
+
+/* ── ADMIN ── */
+#page-admin{background:var(--bg)}
+.admin-header{background:var(--bg2);padding:1.6rem 1.75rem;border-bottom:1px solid var(--border)}
+.admin-header h1{font-family:'Playfair Display',serif;color:var(--accent);font-size:1.7rem}
+.admin-header p{color:var(--muted);font-size:.85rem;margin-top:.2rem;font-weight:300}
+.admin-body{max-width:1100px;margin:0 auto;padding:1.75rem 1.5rem}
+.admin-tabs{display:flex;gap:.35rem;margin-bottom:1.75rem;border-bottom:1px solid var(--border)}
+.tab-btn{padding:.65rem 1.3rem;background:none;border:none;font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.tab-btn.active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.6rem;margin-bottom:1.3rem}
+.card h3{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--white);margin-bottom:1.1rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.form-grid .full{grid-column:1/-1}
+.admin-field label{display:block;font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.38rem}
+.admin-field input,.admin-field textarea{width:100%;padding:.62rem .85rem;border:1px solid var(--border2);border-radius:9px;font-family:'Outfit',sans-serif;font-size:.9rem;color:var(--text);background:var(--bg2);outline:none;transition:border-color .2s}
+.admin-field input:focus,.admin-field textarea:focus{border-color:var(--blue-light)}
+.admin-field textarea{resize:vertical;min-height:75px}
+.toggle-row{display:flex;align-items:center;gap:.7rem;color:var(--text);font-size:.88rem}
+.toggle{width:42px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--blue)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on::after{left:23px}
+.ticket-type-row{display:grid;grid-template-columns:1fr 105px 85px 85px 34px;gap:.55rem;align-items:end;margin-bottom:.55rem}
+.btn-add-ticket{background:none;border:1px dashed var(--border2);border-radius:9px;padding:.55rem 1rem;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;width:100%;transition:all .2s;margin-top:.4rem}
+.btn-add-ticket:hover{border-color:var(--blue-light);color:var(--accent)}
+.btn-remove{background:none;border:none;color:var(--border2);cursor:pointer;font-size:1.15rem;padding:.18rem;transition:color .2s}
+.btn-remove:hover{color:var(--red)}
+.btn-save{background:var(--blue);color:#fff;border:none;padding:.78rem 1.9rem;border-radius:9px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s}
+.btn-save:hover{background:var(--blue-light)}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.admin-event-row{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:1.1rem 1.4rem;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;transition:border-color .2s}
+.admin-event-row:hover{border-color:var(--border2)}
+.admin-event-thumb{width:52px;height:36px;border-radius:6px;background-size:cover;background-position:center;background-color:var(--surface2);flex-shrink:0}
+.admin-event-info{flex:1}
+.admin-event-info h4{font-weight:500;margin-bottom:.25rem;color:var(--white);font-size:.95rem}
+.admin-event-info p{color:var(--muted);font-size:.82rem;font-weight:300}
+.admin-event-actions{display:flex;gap:.4rem;flex-shrink:0}
+.btn-edit{background:var(--surface2);color:var(--text);border:1px solid var(--border2);padding:.4rem .85rem;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.78rem;transition:all .2s}
+.btn-edit:hover{border-color:var(--blue-dim);color:var(--accent)}
+.btn-delete{background:none;border:1px solid var(--border);color:var(--muted);padding:.4rem .85rem;border-radius:7px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.78rem;transition:all .2s}
+.btn-delete:hover{border-color:var(--red);color:var(--red)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem;margin-bottom:1.75rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.3rem}
+.stat-card .val{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--accent)}
+.stat-card .lbl{color:var(--muted);font-size:.8rem;margin-top:.28rem;font-weight:300}
+.badge{display:inline-block;padding:.16rem .52rem;border-radius:20px;font-size:.68rem;font-weight:600}
+.badge.active{background:rgba(34,197,94,.13);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.badge.inactive{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.22)}
+.msg{padding:.7rem .95rem;border-radius:9px;font-size:.85rem;margin-top:.9rem;display:none}
+.msg.success{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.22)}
+.msg.error{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* ── ADMIN LINK (hidden in nav) ── */
+.nav-admin-link{font-size:.72rem;color:var(--muted);cursor:pointer;padding:.2rem .5rem;border-radius:4px;transition:color .2s;text-decoration:none;background:none;border:none;font-family:'Outfit',sans-serif}
+.nav-admin-link:hover{color:var(--text)}
+
+@media(max-width:900px){
+  .nav-cats{display:none}
+  .nav-search{width:180px}
+  .nav-search:focus{width:200px}
+}
+@media(max-width:640px){
+  .hero-slider{height:380px}
+  .hero-slide-content{padding:0 1.5rem 2rem;max-width:100%}
+  .hero-thumbnails{display:none}
+  .portal-body{padding:1.5rem 1rem}
+  .events-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.9rem}
+  .form-grid{grid-template-columns:1fr}
+  .ticket-type-row{grid-template-columns:1fr 1fr}
+  .admin-event-thumb{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('public')">Lippunova</div>
+  <div class="nav-cats" id="nav-cats">
+    <button class="nav-cat active" onclick="setFilter('kaikki',this)">Kaikki</button>
+    <button class="nav-cat" onclick="setFilter('konsertti',this)">Musiikki</button>
+    <button class="nav-cat" onclick="setFilter('teatteri',this)">Teatteri</button>
+    <button class="nav-cat" onclick="setFilter('urheilu',this)">Urheilu</button>
+    <button class="nav-cat" onclick="setFilter('festivaali',this)">Festivaalit</button>
+  </div>
+  <div class="nav-search-wrap">
+    <span class="nav-search-icon">🔍</span>
+    <input class="nav-search" type="text" placeholder="Etsi tapahtumia..." id="nav-search-input" oninput="filterEvents()">
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn outline" id="nav-login-btn" onclick="showLoginTab('login')">Kirjaudu</button>
+    <button class="nav-btn primary" id="nav-register-btn" onclick="showLoginTab('register')">Luo tili</button>
+    <button class="nav-btn ghost" id="nav-logout" onclick="logout()" style="display:none">Kirjaudu ulos</button>
+    <button class="nav-admin-link" id="nav-admin-btn" onclick="goAdmin()" style="display:none">⚙ Admin</button>
+  </div>
+</nav>
+
+<!-- PUBLIC PAGE -->
+<div class="page active" id="page-public">
+
+  <!-- HERO SLIDER -->
+  <div class="hero-slider" id="hero-slider">
+    <div class="hero-slide active" id="hero-default">
+      <div class="hero-slide-img" style="background:linear-gradient(135deg,#0b0d12 0%,#0f1628 40%,#0d1220 100%)"></div>
+      <div class="hero-slide-content">
+        <div class="hero-slide-tag">✦ Lippunova</div>
+        <h2>Löydä seuraava<br><em style="color:var(--accent);font-style:italic">elämyksesi</em></h2>
+        <div class="hero-slide-meta">
+          <span>🎟 Kaikki tapahtumat yhdessä paikassa</span>
+        </div>
+        <button class="btn-hero" onclick="document.getElementById('events-list').scrollIntoView({behavior:'smooth'})">Selaa tapahtumia</button>
+      </div>
+    </div>
+  </div>
+  <div class="hero-dots" id="hero-dots"></div>
+
+  <!-- FILTER ROW -->
+  <div class="filter-row">
+    <button class="filter-chip active" onclick="setFilter('kaikki',this);syncNavCat('kaikki')">Kaikki</button>
+    <button class="filter-chip" onclick="setFilter('konsertti',this);syncNavCat('konsertti')">Musiikki</button>
+    <button class="filter-chip" onclick="setFilter('teatteri',this);syncNavCat('teatteri')">Teatteri</button>
+    <button class="filter-chip" onclick="setFilter('urheilu',this);syncNavCat('urheilu')">Urheilu</button>
+    <button class="filter-chip" onclick="setFilter('festivaali',this);syncNavCat('festivaali')">Festivaalit</button>
+    <button class="filter-chip" onclick="setFilter('yksityinen',this);syncNavCat('yksityinen')">Yksityiset</button>
+    <div class="filter-sep"></div>
+    <div class="filter-right">
+      <button class="btn-filter" onclick="filterEvents()">⊞ Näytä kaikki</button>
+    </div>
+  </div>
+
+  <div class="portal-body">
+    <div class="portal-header">
+      <h2>Tulevat tapahtumat</h2>
+      <span class="count" id="event-count"></span>
+    </div>
+    <div class="events-grid" id="events-list">
+      <div class="empty-state"><p>Ladataan tapahtumia...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN / REGISTER PAGE -->
+<div class="page" id="page-login">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 62px)">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="auth-tab-login" onclick="switchAuthTab('login')">Kirjaudu sisään</button>
+        <button class="auth-tab" id="auth-tab-register" onclick="switchAuthTab('register')">Luo tili</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-panel active" id="auth-panel-login">
+        <h2>Tervetuloa takaisin</h2>
+        <p>Kirjaudu sisään jatkaaksesi</p>
+        <div class="form-field"><label>Sähköposti</label><input type="email" id="login-email" placeholder="sinä@email.fi"></div>
+        <div class="form-field"><label>Salasana</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn-auth" onclick="doLogin()">Kirjaudu sisään</button>
+        <div class="auth-error" id="login-error">Väärä sähköposti tai salasana.</div>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-panel" id="auth-panel-register">
+        <h2>Luo tili</h2>
+        <p>Liity ja seuraa lempiartistejasi</p>
+        <div class="form-field"><label>Sähköposti</label><input type="email" id="reg-email" placeholder="sinä@email.fi"></div>
+        <div class="form-field"><label>Salasana</label><input type="password" id="reg-password" placeholder="Vähintään 6 merkkiä"></div>
+        <button class="btn-auth" onclick="doRegister()">Luo tili</button>
+        <div class="auth-error" id="reg-error"></div>
+        <div class="auth-info" id="reg-info"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div class="admin-header">
+    <h1>Hallintapaneeli</h1>
+    <p id="admin-user-label">Tervetuloa</p>
+  </div>
+  <div class="admin-body">
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-events')">Tapahtumat</button>
+      <button class="tab-btn" onclick="switchTab('tab-new')">+ Uusi tapahtuma</button>
+      <button class="tab-btn" onclick="switchTab('tab-stats')">Tilastot</button>
+    </div>
+
+    <div class="tab-content active" id="tab-events">
+      <div id="admin-events-list"><div class="empty-state"><p>Ladataan...</p></div></div>
+    </div>
+
+    <div class="tab-content" id="tab-new">
+      <div class="card">
+        <h3 id="form-title">Uusi tapahtuma</h3>
+        <div class="form-grid">
+          <div class="admin-field full"><label>Tapahtuman nimi</label><input type="text" id="f-name" placeholder="esim. Kesäkonsertti 2026"></div>
+          <div class="admin-field"><label>Päivämäärä</label><input type="date" id="f-date"></div>
+          <div class="admin-field"><label>Kellonaika</label><input type="time" id="f-time"></div>
+          <div class="admin-field"><label>Paikka / Kaupunki</label><input type="text" id="f-location" placeholder="esim. Helsinki"></div>
+          <div class="admin-field"><label>Osoite</label><input type="text" id="f-address" placeholder="esim. Olympiastadion"></div>
+          <div class="admin-field full"><label>Kuvan URL (esim. Unsplash-linkki)</label><input type="url" id="f-image" placeholder="https://images.unsplash.com/..."></div>
+          <div class="admin-field full"><label>Kuvaus</label><textarea id="f-description" placeholder="Lyhyt kuvaus tapahtumasta..."></textarea></div>
+          <div class="admin-field"><label>Yksityinen</label><div class="toggle-row"><button class="toggle" id="f-private" onclick="toggleBtn('f-private')"></button><span id="f-private-label">Ei</span></div></div>
+          <div class="admin-field"><label>Julkaistu</label><div class="toggle-row"><button class="toggle on" id="f-active" onclick="toggleBtn('f-active')"></button><span id="f-active-label">Kyllä</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Lipputyypit</h3>
+        <div style="display:grid;grid-template-columns:1fr 105px 85px 85px 34px;gap:.5rem;margin-bottom:.45rem">
+          <span style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Nimi</span>
+          <span style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Hinta €</span>
+          <span style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Max kpl</span>
+          <span style="font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Myyty</span>
+          <span></span>
+        </div>
+        <div id="ticket-types-container"></div>
+        <button class="btn-add-ticket" onclick="addTicketRow()">+ Lisää lipputyyppi</button>
+      </div>
+      <button class="btn-save" onclick="saveEvent()" id="btn-save">Tallenna tapahtuma</button>
+      <div class="msg" id="save-msg"></div>
+    </div>
+
+    <div class="tab-content" id="tab-stats">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="val" id="stat-events">—</div><div class="lbl">Tapahtumaa yhteensä</div></div>
+        <div class="stat-card"><div class="val" id="stat-tickets">—</div><div class="lbl">Lippuja myyty</div></div>
+        <div class="stat-card"><div class="val" id="stat-revenue">—</div><div class="lbl">Arvioitu tuotto</div></div>
+      </div>
+      <div id="stats-detail"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKET MODAL -->
+<div class="modal-overlay" id="ticket-modal">
+  <div class="modal">
+    <div class="modal-hero" id="modal-hero-img"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 id="modal-event-name">Valitse lippu</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-event-meta" id="modal-event-meta"></div>
+      <div id="modal-ticket-list"></div>
+      <div class="qty-row">
+        <span class="qty-label">Määrä:</span>
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <span class="qty-val" id="modal-qty">1</span>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <div class="modal-total">
+        <div class="row"><span>Liput (<span id="s-qty">1</span> × <span id="s-price">0</span> €)</span><span id="s-subtotal">0 €</span></div>
+        <div class="row"><span>Palvelumaksu (5%)</span><span id="s-fee">0 €</span></div>
+        <div class="row total"><span>Yhteensä</span><span id="s-total">0 €</span></div>
+      </div>
+      <button class="btn-buy" onclick="alert('Stripe-integraatio tulossa!')">Osta liput →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://lcjqkbeijzkolcvwwqpr.supabase.co';
+const SUPABASE_KEY='sb_publishable_Jdm0olOIBXIgugd7nwOz2w_2x0dT_os';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,allEvents=[],activeFilter='kaikki',searchQuery='';
+let modalTickets=[],selectedTicketIdx=0,modalQty=1,editingEventId=null;
+let heroIdx=0,heroTimer=null;
+
+async function init(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;updateNavForUser(true);}
+  loadPublicEvents();
+}
+
+function updateNavForUser(on){
+  document.getElementById('nav-login-btn').style.display=on?'none':'';
+  document.getElementById('nav-register-btn').style.display=on?'none':'';
+  document.getElementById('nav-logout').style.display=on?'block':'none';
+  const adminBtn=document.getElementById('nav-admin-btn');
+  // Only show admin link for the known admin email
+  if(on && currentUser){adminBtn.style.display='inline-block';}
+  else{adminBtn.style.display='none';}
+}
+
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');}
+
+function showLoginTab(tab){
+  showPage('login');
+  switchAuthTab(tab);
+}
+
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('auth-tab-'+tab).classList.add('active');
+  document.getElementById('auth-panel-'+tab).classList.add('active');
+}
+
+function goAdmin(){
+  document.getElementById('admin-user-label').textContent=currentUser?.email||'';
+  loadAdminEvents();loadStats();showPage('admin');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value,pw=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');errEl.style.display='none';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error){errEl.style.display='block';return;}
+  currentUser=data.user;updateNavForUser(true);showPage('public');
+}
+
+async function doRegister(){
+  const email=document.getElementById('reg-email').value,pw=document.getElementById('reg-password').value;
+  const errEl=document.getElementById('reg-error'),infoEl=document.getElementById('reg-info');
+  errEl.style.display='none';infoEl.style.display='none';
+  const{data,error}=await sb.auth.signUp({email,password:pw});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  infoEl.textContent='Tarkista sähköpostisi vahvistuslinkki!';infoEl.style.display='block';
+}
+
+async function logout(){await sb.auth.signOut();currentUser=null;updateNavForUser(false);showPage('public');}
+
+// ── HERO SLIDER ──
+function buildHeroSlider(events){
+  const slider=document.getElementById('hero-slider');
+  const dotsEl=document.getElementById('hero-dots');
+  const heroEvents=events.filter(e=>e.image_url).slice(0,5);
+  if(!heroEvents.length){
+    document.getElementById('hero-default').classList.add('active');
+    return;
+  }
+  slider.innerHTML='';dotsEl.innerHTML='';
+  heroEvents.forEach((e,i)=>{
+    const slide=document.createElement('div');
+    slide.className='hero-slide'+(i===0?' active':'');
+    const d=new Date(e.date),dateStr=d.toLocaleDateString('fi-FI');
+    const minPrice=e.ticket_types&&e.ticket_types.length?Math.min(...e.ticket_types.map(t=>t.price)):null;
+    slide.innerHTML=`
+      <div class="hero-slide-img" style="background-image:url('${e.image_url}')"></div>
+      <div class="hero-slide-content">
+        <div class="hero-slide-tag">✦ ${e.location||'Tapahtuma'}</div>
+        <h2>${e.name}</h2>
+        <div class="hero-slide-meta">
+          <span>📅 ${dateStr}</span>
+          ${e.time?`<span>🕐 ${e.time}</span>`:''}
+          ${minPrice!==null?`<span>🎟 alkaen ${minPrice} €</span>`:''}
+        </div>
+        <button class="btn-hero" onclick='openModal(${JSON.stringify(e)})'>Osta liput</button>
+      </div>`;
+    slider.appendChild(slide);
+    const dot=document.createElement('button');
+    dot.className='hero-dot'+(i===0?' active':'');
+    dot.onclick=()=>goHeroSlide(i);
+    dotsEl.appendChild(dot);
+  });
+  // Thumbnails
+  if(heroEvents.length>1){
+    const thumbBar=document.createElement('div');
+    thumbBar.className='hero-thumbnails';
+    heroEvents.forEach((e,i)=>{
+      const t=document.createElement('div');
+      t.className='hero-thumb'+(i===0?' active':'');
+      t.innerHTML=`<div class="hero-thumb-img" style="background-image:url('${e.image_url}')"></div>`;
+      t.onclick=()=>goHeroSlide(i);
+      thumbBar.appendChild(t);
+    });
+    slider.appendChild(thumbBar);
+  }
+  startHeroTimer(heroEvents.length);
+}
+
+function goHeroSlide(idx){
+  heroIdx=idx;
+  const slides=document.querySelectorAll('.hero-slide');
+  const dots=document.querySelectorAll('.hero-dot');
+  const thumbs=document.querySelectorAll('.hero-thumb');
+  slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+  dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+  thumbs.forEach((t,i)=>t.classList.toggle('active',i===idx));
+}
+function startHeroTimer(len){
+  if(heroTimer)clearInterval(heroTimer);
+  if(len<2)return;
+  heroTimer=setInterval(()=>goHeroSlide((heroIdx+1)%len),5000);
+}
+
+// ── PUBLIC EVENTS ──
+async function loadPublicEvents(){
+  const{data}=await sb.from('events').select('*, ticket_types(*)').eq('is_active',true).order('date');
+  allEvents=data||[];
+  buildHeroSlider(allEvents);
+  renderEvents();
+}
+
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderEvents();
+}
+function syncNavCat(f){
+  document.querySelectorAll('.nav-cat').forEach(b=>{
+    b.classList.toggle('active',b.textContent.toLowerCase().includes(f==='kaikki'?'kaikki':f));
+  });
+}
+function filterEvents(){searchQuery=document.getElementById('nav-search-input').value.toLowerCase();renderEvents();}
+
+function renderEvents(){
+  const el=document.getElementById('events-list'),countEl=document.getElementById('event-count');
+  let filtered=allEvents;
+  if(searchQuery)filtered=filtered.filter(e=>e.name.toLowerCase().includes(searchQuery)||(e.location&&e.location.toLowerCase().includes(searchQuery))||(e.description&&e.description.toLowerCase().includes(searchQuery)));
+  if(activeFilter==='yksityinen')filtered=filtered.filter(e=>e.is_private);
+  else if(activeFilter!=='kaikki')filtered=filtered.filter(e=>e.name.toLowerCase().includes(activeFilter)||(e.description&&e.description.toLowerCase().includes(activeFilter)));
+  if(countEl)countEl.textContent=filtered.length+' tapahtumaa';
+  if(!filtered.length){el.innerHTML='<div class="empty-state"><p>Ei tapahtumia tällä hakuehdolla.</p></div>';return;}
+  const M=['tam','hel','maa','huh','tou','kes','hei','elo','syy','lok','mar','jou'];
+  el.innerHTML=filtered.map((e,i)=>{
+    const d=new Date(e.date),day=d.getDate(),mon=M[d.getMonth()];
+    const minPrice=e.ticket_types&&e.ticket_types.length?Math.min(...e.ticket_types.map(t=>t.price)):null;
+    const initials=e.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const imgStyle=e.image_url?`background-image:url('${e.image_url}')`:'' ;
+    return`<div class="event-card" style="animation-delay:${i*.065}s" onclick='openModal(${JSON.stringify(e)})'>
+      <div class="event-card-img" style="${imgStyle}">
+        ${!e.image_url?`<div class="event-card-img-placeholder">${initials}</div>`:''}
+        <div class="event-card-date"><div class="d">${day}</div><div class="m">${mon}</div></div>
+        ${e.is_private?'<div class="event-card-private">🔒 Yksityinen</div>':''}
+      </div>
+      <div class="event-card-body">
+        <h3>${e.name}</h3>
+        <div class="event-card-meta">
+          <span>📍 ${e.location}${e.address?', '+e.address:''}</span>
+          ${e.time?`<span>🕐 ${e.time}</span>`:''}
+          ${e.description?`<span style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${e.description}</span>`:''}
+        </div>
+        <div class="event-card-footer">
+          <div class="event-card-price">${minPrice!==null?`${minPrice} €<small>alkaen</small>`:'<span style="font-family:Outfit;font-size:.76rem;color:var(--muted)">Ilmainen</span>'}</div>
+          <button class="btn-card-buy" onclick="event.stopPropagation();openModal(${JSON.stringify(e)})">Osta liput</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TICKET MODAL ──
+function openModal(ev){
+  modalTickets=ev.ticket_types||[];selectedTicketIdx=0;modalQty=1;
+  document.getElementById('modal-event-name').textContent=ev.name;
+  const heroEl=document.getElementById('modal-hero-img');
+  heroEl.style.backgroundImage=ev.image_url?`url('${ev.image_url}')`:'';
+  heroEl.style.display=ev.image_url?'block':'none';
+  const d=new Date(ev.date);
+  document.getElementById('modal-event-meta').innerHTML=`<span>📍 ${ev.location}${ev.address?', '+ev.address:''}</span><span>📅 ${d.toLocaleDateString('fi-FI')}${ev.time?' · '+ev.time:''}</span>`;
+  renderModalTickets();updateModalTotal();document.getElementById('ticket-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('ticket-modal').classList.remove('open');}
+function renderModalTickets(){
+  document.getElementById('modal-ticket-list').innerHTML=modalTickets.length
+    ?modalTickets.map((t,i)=>`<div class="ticket-row${i===selectedTicketIdx?' selected':''}" onclick="selectTicket(${i})"><div><div class="ticket-name">${t.name}</div><div class="ticket-avail">${t.total_count-(t.sold_count||0)} jäljellä / ${t.total_count}</div></div><div class="ticket-price">${t.price} €</div></div>`).join('')
+    :'<p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Ei lippuja saatavilla.</p>';
+}
+function selectTicket(i){selectedTicketIdx=i;renderModalTickets();updateModalTotal();}
+function changeQty(d){modalQty=Math.max(1,modalQty+d);document.getElementById('modal-qty').textContent=modalQty;updateModalTotal();}
+function updateModalTotal(){
+  if(!modalTickets.length)return;
+  const price=modalTickets[selectedTicketIdx].price,sub=price*modalQty,fee=+(sub*.05).toFixed(2),total=+(sub+fee).toFixed(2);
+  document.getElementById('s-qty').textContent=modalQty;document.getElementById('s-price').textContent=price;
+  document.getElementById('s-subtotal').textContent=sub.toFixed(2)+' €';document.getElementById('s-fee').textContent=fee.toFixed(2)+' €';document.getElementById('s-total').textContent=total.toFixed(2)+' €';
+}
+
+// ── ADMIN ──
+function switchTab(id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');event.target.classList.add('active');
+  if(id==='tab-new'&&!editingEventId)resetForm();
+}
+async function loadAdminEvents(){
+  const{data}=await sb.from('events').select('*, ticket_types(*)').order('date');
+  const el=document.getElementById('admin-events-list');
+  if(!data||!data.length){el.innerHTML='<div class="empty-state"><p>Ei tapahtumia vielä.</p></div>';return;}
+  el.innerHTML=data.map(e=>{
+    const d=new Date(e.date).toLocaleDateString('fi-FI');
+    const sold=(e.ticket_types||[]).reduce((a,t)=>a+(t.sold_count||0),0),total=(e.ticket_types||[]).reduce((a,t)=>a+t.total_count,0);
+    return`<div class="admin-event-row">
+      <div class="admin-event-thumb" style="${e.image_url?`background-image:url('${e.image_url}')`:''};"></div>
+      <div class="admin-event-info"><h4>${e.name} <span class="badge ${e.is_active?'active':'inactive'}">${e.is_active?'Julkaistu':'Piilotettu'}</span></h4><p>${d} · ${e.location} · ${sold}/${total} lippua myyty</p></div>
+      <div class="admin-event-actions"><button class="btn-edit" onclick='editEvent(${JSON.stringify(e)})'>Muokkaa</button><button class="btn-delete" onclick="deleteEvent('${e.id}')">Poista</button></div>
+    </div>`;
+  }).join('');
+}
+function resetForm(){
+  editingEventId=null;document.getElementById('form-title').textContent='Uusi tapahtuma';
+  ['f-name','f-date','f-time','f-location','f-address','f-image','f-description'].forEach(id=>document.getElementById(id).value='');
+  setToggle('f-private',false);setToggle('f-active',true);
+  document.getElementById('ticket-types-container').innerHTML='';addTicketRow();
+  document.getElementById('save-msg').style.display='none';
+}
+function editEvent(e){
+  editingEventId=e.id;document.getElementById('form-title').textContent='Muokkaa tapahtumaa';
+  document.getElementById('f-name').value=e.name||'';document.getElementById('f-date').value=e.date||'';
+  document.getElementById('f-time').value=e.time||'';document.getElementById('f-location').value=e.location||'';
+  document.getElementById('f-address').value=e.address||'';document.getElementById('f-image').value=e.image_url||'';
+  document.getElementById('f-description').value=e.description||'';
+  setToggle('f-private',e.is_private);setToggle('f-active',e.is_active);
+  document.getElementById('ticket-types-container').innerHTML='';
+  (e.ticket_types&&e.ticket_types.length?e.ticket_types:[{}]).forEach(t=>addTicketRow(t));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-new').classList.add('active');document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  document.getElementById('save-msg').style.display='none';
+}
+function addTicketRow(t={}){
+  const div=document.createElement('div');div.className='ticket-type-row';
+  div.innerHTML=`<div class="admin-field"><input type="text" placeholder="esim. Normaalilippu" value="${t.name||''}" class="tt-name"></div><div class="admin-field"><input type="number" placeholder="35" value="${t.price||''}" class="tt-price" min="0" step="0.01"></div><div class="admin-field"><input type="number" placeholder="100" value="${t.total_count||''}" class="tt-total" min="1"></div><div class="admin-field"><input type="number" placeholder="0" value="${t.sold_count||0}" class="tt-sold" min="0"></div><button class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
+  if(t.id)div.dataset.ticketId=t.id;
+  document.getElementById('ticket-types-container').appendChild(div);
+}
+function toggleBtn(id){const btn=document.getElementById(id),on=btn.classList.toggle('on');document.getElementById(id+'-label').textContent=on?'Kyllä':'Ei';}
+function setToggle(id,val){document.getElementById(id).classList.toggle('on',!!val);document.getElementById(id+'-label').textContent=val?'Kyllä':'Ei';}
+function getToggle(id){return document.getElementById(id).classList.contains('on');}
+
+async function saveEvent(){
+  const btn=document.getElementById('btn-save'),msg=document.getElementById('save-msg');
+  btn.disabled=true;btn.textContent='Tallennetaan...';msg.style.display='none';
+  const eventData={name:document.getElementById('f-name').value.trim(),date:document.getElementById('f-date').value,time:document.getElementById('f-time').value||null,location:document.getElementById('f-location').value.trim(),address:document.getElementById('f-address').value.trim()||null,image_url:document.getElementById('f-image').value.trim()||null,description:document.getElementById('f-description').value.trim()||null,is_private:getToggle('f-private'),is_active:getToggle('f-active')};
+  if(!eventData.name||!eventData.date||!eventData.location){showMsg('Täytä vähintään nimi, päivämäärä ja paikka.','error');btn.disabled=false;btn.textContent='Tallenna tapahtuma';return;}
+  let eventId=editingEventId;
+  if(eventId){const{error}=await sb.from('events').update(eventData).eq('id',eventId);if(error){showMsg('Virhe: '+error.message,'error');btn.disabled=false;btn.textContent='Tallenna tapahtuma';return;}await sb.from('ticket_types').delete().eq('event_id',eventId);}
+  else{const{data,error}=await sb.from('events').insert(eventData).select().single();if(error){showMsg('Virhe: '+error.message,'error');btn.disabled=false;btn.textContent='Tallenna tapahtuma';return;}eventId=data.id;}
+  const rows=document.querySelectorAll('.ticket-type-row'),tickets=[];
+  rows.forEach(row=>{const name=row.querySelector('.tt-name').value.trim(),price=parseFloat(row.querySelector('.tt-price').value),total=parseInt(row.querySelector('.tt-total').value),sold=parseInt(row.querySelector('.tt-sold').value)||0;if(name&&!isNaN(price)&&!isNaN(total))tickets.push({event_id:eventId,name,price,total_count:total,sold_count:sold});});
+  if(tickets.length)await sb.from('ticket_types').insert(tickets);
+  showMsg('Tapahtuma tallennettu!','success');btn.disabled=false;btn.textContent='Tallenna tapahtuma';
+  editingEventId=null;loadAdminEvents();loadPublicEvents();loadStats();
+}
+async function deleteEvent(id){
+  if(!confirm('Haluatko varmasti poistaa tämän tapahtuman?'))return;
+  await sb.from('events').delete().eq('id',id);loadAdminEvents();loadPublicEvents();loadStats();
+}
+async function loadStats(){
+  const{data:events}=await sb.from('events').select('*, ticket_types(*)');if(!events)return;
+  let totalSold=0,totalRevenue=0;
+  events.forEach(e=>(e.ticket_types||[]).forEach(t=>{totalSold+=t.sold_count||0;totalRevenue+=(t.sold_count||0)*t.price;}));
+  document.getElementById('stat-events').textContent=events.length;document.getElementById('stat-tickets').textContent=totalSold;document.getElementById('stat-revenue').textContent=totalRevenue.toFixed(0)+' €';
+  document.getElementById('stats-detail').innerHTML=events.map(e=>{
+    const sold=(e.ticket_types||[]).reduce((a,t)=>a+(t.sold_count||0),0),total=(e.ticket_types||[]).reduce((a,t)=>a+t.total_count,0),pct=total?Math.round(sold/total*100):0,rev=(e.ticket_types||[]).reduce((a,t)=>a+(t.sold_count||0)*t.price,0);
+    return`<div class="card"><h3>${e.name}</h3><div style="display:flex;gap:2rem;flex-wrap:wrap;color:var(--muted);font-size:.85rem;margin-top:.5rem"><span>📅 ${new Date(e.date).toLocaleDateString('fi-FI')}</span><span>🎟 ${sold}/${total} myyty (${pct}%)</span><span>💶 ${rev.toFixed(0)} € tuotto</span></div><div style="background:var(--bg2);border-radius:20px;height:6px;margin-top:.9rem;overflow:hidden"><div style="background:var(--blue);height:100%;width:${pct}%;border-radius:20px;transition:width .5s"></div></div></div>`;
+  }).join('');
+}
+function showMsg(text,type){const el=document.getElementById('save-msg');el.textContent=text;el.className='msg '+type;el.style.display='block';}
+document.getElementById('ticket-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+init();
+</script>
+</body>
+</html>
